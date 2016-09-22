@@ -66,46 +66,66 @@ class TimerPeripheral: NSObject, CBPeripheralManagerDelegate {
     
     var date: Date? {
         didSet {
-            // update peripheral value and notify
+            guard let date = date, let peripheral = peripheral, let charateristic = charateristic else { return }
+            let time = CurrentTime(date: date)
+            guard let data = time.data else { return }
+            let didSendValue = peripheral.updateValue(data, for: charateristic, onSubscribedCentrals: nil)
+            print("updating value:", didSendValue, time.date)
         }
     }
+    
+    private var peripheral: CBPeripheralManager!
+    private var charateristic: CBMutableCharacteristic!
+    private var service: CBMutableService!
     
     override init() {
         print("init")
         super.init() // require to super init before self available
-        // create peripheral
+        peripheral = CBPeripheralManager(delegate: self, queue: nil)
+        //        setup()
     }
     
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
-        // setup peripheral depending of state
+        switch peripheral.state {
+        case .poweredOn:
+            setup()
+        default:
+            break
+        }
     }
     
     func setup() {
-        // create characteristic
-        // create service using characteristic
-        // add service to peripheral
+        charateristic = CBMutableCharacteristic(type: UUID.characteristic.uuid, properties: [.read, .notify], value: nil, permissions: [.readable])
+        service = CBMutableService(type: UUID.service.uuid, primary: true)
+        service.characteristics = [charateristic]
+        peripheral.add(service)
     }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
-        // service ready
-        // start advertising
+        print("didAdd:", service, error)
+        peripheral.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [service.uuid], CBAdvertisementDataLocalNameKey: "Timer"])
     }
     
     func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
-        //
+        print("didStartAdvertising:", peripheral, error)
     }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
-        // respond to read request
-        // peripheral.respond(to: CBATTRequest, withResult: CBATTError.Code)
+        print("didReceiveRead:", request)
+        guard let date = date else {
+            peripheral.respond(to: request, withResult: .insufficientResources)
+            return
+        }
+        request.value = CurrentTime(date: date).data
+        peripheral.respond(to: request, withResult: .success)
     }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
-        //
+        print("didSubscribe:", peripheral, characteristic)
     }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
-        //
+        print("didUnsubscribe")
     }
 }
 
