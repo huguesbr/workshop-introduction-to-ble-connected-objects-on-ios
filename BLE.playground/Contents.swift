@@ -9,16 +9,12 @@ PlaygroundPage.current.needsIndefiniteExecution = true
 
 class BLEScanner: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     enum UUID: String {
-        case service = "1234"
-        case characteristic = "5678"
-        
+        case service = "3749FA00-4CED-524B-33D5-F00FD858C4F2"
+        case characteristic = "3749FA01-4CED-524B-33D5-F00FD858C4F2"
         var uuid: CBUUID {
             return CBUUID(string: rawValue)
         }
     }
-    
-    var central: CBCentralManager!
-    var currentPeripheral: CBPeripheral?
     
     override init() {
         super.init() // require to super init before self available
@@ -27,15 +23,17 @@ class BLEScanner: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     
     // MARK: CentralManagerDelegate
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        // start scanning depending of state
+        // scan for peripherals depending of state
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        // connect to device
+        // stop scan
+        // connect
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        // discover device services (battery only)
+        // set as delegate
+        // discover services
     }
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -43,17 +41,21 @@ class BLEScanner: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        // re-start scanning
+        // re-scan
     }
     
     // MARK: PeripheralDelegate
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        // discover service characteristics
+        // discover characteristics
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        // read value
+        // set notify
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        //
     }
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
