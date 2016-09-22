@@ -108,3 +108,33 @@ class TimerPeripheral: NSObject, CBPeripheralManagerDelegate {
         //
     }
 }
+
+struct CurrentTime {
+    // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.current_time.xml
+    // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.date_time.xml
+    
+    let date: Date
+    
+    var data: Data? {
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        guard let year = components.year, let month = components.month, let day = components.day, let hour = components.hour, let minute = components.minute, let second = components.second else {
+            return nil
+        }
+        var data = Data()
+        data.append(UInt8(year & 0x00ff))
+        data.append(UInt8(year >> 8))
+        data.append(UInt8(month))
+        data.append(UInt8(day))
+        data.append(UInt8(hour))
+        data.append(UInt8(minute))
+        data.append(UInt8(second))
+        data.append(0)
+        data.append(0)
+        data.append(0)
+        return data
+    }
+    
+    init(date: Date) {
+        self.date = date
+    }
+}

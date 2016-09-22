@@ -63,4 +63,68 @@ class BLEScanner: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     }
 }
 
+struct CurrentTime {
+    // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.current_time.xml
+    // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.date_time.xml
+
+    let year: UInt16
+    let month: UInt8
+    let day: UInt8
+    let hours: UInt8
+    let minutes: UInt8
+    let seconds: UInt8
+    let dayOfWeek: UInt8
+    let fraction: UInt8
+    let reason: UInt8
+    
+    var date: Date? {
+        let components = DateComponents(calendar: Calendar.current, timeZone: TimeZone.current, era: nil, year: Int(year), month: Int(month), day: Int(day), hour: Int(hours), minute: Int(minutes), second: Int(seconds), nanosecond: nil, weekday: nil, weekdayOrdinal: nil, quarter: nil, weekOfMonth: nil, weekOfYear: nil, yearForWeekOfYear: nil)
+        return Calendar.current.date(from: components)
+    }
+    
+    init(data: Data) throws {
+        var parser = try DataParser(data: data)
+        year = try parser.extractUInt16()
+        month = try parser.extractUInt8()
+        day = try parser.extractUInt8()
+        hours = try parser.extractUInt8()
+        minutes = try parser.extractUInt8()
+        seconds = try parser.extractUInt8()
+        dayOfWeek = try parser.extractUInt8()
+        fraction = try parser.extractUInt8()
+        reason = try parser.extractUInt8()
+    }
+}
+
+struct DataParser {
+    let data: Data
+    var bytes: UnsafePointer<UInt8>?
+    
+    struct InvalidData: Error {}
+    
+    init(data: Data) throws {
+        self.data = data
+        data.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) -> Void in
+            print("raw:", bytes)
+            self.bytes = bytes
+        }
+    }
+    
+    mutating func extractUInt16() throws -> UInt16 {
+        guard let bytes = bytes else { throw InvalidData() }
+        let value: UInt16 = bytes.withMemoryRebound(to: UInt16.self, capacity: 1) { (bytes: UnsafeMutablePointer<UInt16>) -> UInt16 in
+            return bytes.pointee
+        }
+        self.bytes = bytes.advanced(by: 2)
+        return value
+    }
+    
+    mutating func extractUInt8() throws -> UInt8 {
+        guard let bytes = bytes else { throw InvalidData() }
+        let value = bytes.pointee
+        self.bytes = bytes.advanced(by: 1)
+        return value
+    }
+}
+
 let scanner = BLEScanner()
